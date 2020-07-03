@@ -63,32 +63,21 @@ class Contacts extends RestController
         }
     }
 
-    public function upload($avatar)
-    {
-        if (!empty($_FILES['avatar']['name'])) {
-            $fileInfo = pathinfo($_FILES['avatar']['name']);
-            $filePath = $this->uploadPath . $fileInfo['basename'];
-
-            move_uploaded_file($_FILES['avatar']['tmp_name'], $filePath);
-        }
-
-        if (!empty($avatar)) {
-            $fileURL = $this->uploadURL;
-        } else {
-            $fileURL = "Image Null";
-        }
-
-        return $fileURL;
-    }
-
     public function index_post()
     {
         $avatar = $this->post('avatar');
+        $this->upload();
+        if (!empty($avatar)) {
+            $fileURL = $this->uploadURL;
+        } else {
+            $fileURL = 'Image Null';
+        }
+
         $data = [
             'nama' => $this->post('nama'),
             'nomor' => $this->post('nomor'),
             'alamat' => $this->post('alamat'),
-            'avatar' => $this->upload($avatar) . $avatar
+            'avatar' =>  $fileURL . $avatar
         ];
 
         if ($this->ContactsModel->insertContacts($data) > 0) {
@@ -105,15 +94,45 @@ class Contacts extends RestController
         }
     }
 
+    private function upload()
+    {
+        if (empty($_FILES['avatar'])) {
+            return false;
+        }
+
+        $fileName = $_FILES['avatar']['name'];
+        $tempName = $_FILES['avatar']['tmp_name'];
+        $error = $_FILES['avatar']['error'];
+
+        if ($error === 4) {
+            return false;
+        }
+
+        // $avatarExt = explode('.', $fileName);
+        // $avatarExt = strtolower(end($avatarExt));
+
+        // $newFileName = uniqid();
+        // $newFileName .= '.';
+        // $newFileName .= $avatarExt;
+
+        move_uploaded_file($tempName, $this->uploadPath . $fileName);
+    }
+
     public function index_put()
     {
         $id = $this->put('id');
         $avatar = $this->put('avatar');
+        if (!empty($avatar)) {
+            $fileURL = $this->uploadURL;
+        } else {
+            $fileURL = 'Image Null';
+        }
+
         $data = [
             'nama' => $this->put('nama'),
             'nomor' => $this->put('nomor'),
             'alamat' => $this->put('alamat'),
-            'avatar' => $this->upload($avatar) . $avatar
+            'avatar' => $fileURL . $avatar
         ];
 
         if ($this->ContactsModel->updateContacts($data, $id) > 0) {
